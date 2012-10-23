@@ -25,7 +25,7 @@ GeneralHID.postDevices;
 // the number in front of each line indicates its place in the deviceList
 
 // open the device of interest
-a = GeneralHID.open( GeneralHID.deviceList[9] );
+a = GeneralHID.open( GeneralHID.deviceList[12] );
 
 // get information about the device:
 a.info;
