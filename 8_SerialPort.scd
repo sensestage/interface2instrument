@@ -119,3 +119,26 @@ Quarks.gui;
 // Arduino -> ArduinoSMS protocol, but also good example for general protocol
 // DMX
 // SCPyduino
+
+
+
+// method to find the serial port automatically, if it got unplugged
+~serialDevice = "/dev/tty.usbserial-A7005G4Y";
+Tdef( \openSerial,{
+	var mydev;
+	while ( { mydev.isNil },{
+		mydev = SerialPort.devices.detect{ |it| ~serialDevice == it }.postln;
+		if ( mydev.notNil ){
+         // this is a subclass of Arduion, with our own parser, thus opening the serialport:
+			q = XBeeSMSOld.new( mydev, 19200 );
+			q.port.doneAction = { Tdef( \openSerial ).play; }; // start the task when the port gets closed
+         // set the action for what should happen when a message has come in
+			q.action_( { |msg| fork{ x.setData( msg[0], msg.copyToEnd(1) ); }; ~sensingOn = 0; });
+		}{
+			// probe every three seconds;
+			3.0.wait;
+		};
+	} );
+});
+
+Tdef( \openSerial ).play;
