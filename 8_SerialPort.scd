@@ -1,13 +1,18 @@
 /// With the serial port, there is no fixed protocol, you have to know what bytes the device is expecting, or sending out.
 //
 
-
+SerialPort.listDevices;
+// ttyUSB*, ttyACM*
 (
 p = SerialPort(
     "/dev/tty.usbserial-181",
     baudrate: 9600,
     crtscts: true);
 )
+
+// common baudrates:
+// 9600, 19200
+[9600, 19200, 38400, 57600, 115200 ]
 
 // read a byte from the device
 
@@ -40,6 +45,8 @@ p = SerialPort(
     crtscts: true);
 )
 
+110.fold(0,100)
+
 //send serial data - slow pulsating
 (
 r= Routine({
@@ -63,7 +70,31 @@ p = SerialPort(
     crtscts: true);
 )
 
+~vari = "somethings"
+~vari2 = ~vari;
+
+~vari2 === ~vari;
+// true, they are the same string
+
+~vari2 = ~vari.copy;
+~vari2 === ~vari;
+// false, one is a copy of the other string
+
+~vari.dump
+~vari2.dump;
+
+$\n.ascii == 10
+$\r.ascii
+
 //read 10bit serial data sent from Arduino's Serial.println
+
+500
+$0.ascii
+~str = "";
+~str = ~str ++ 53.asAscii
+~str
+~str = ~str ++ 48.asAscii
+~str.asInteger
 (
 r= Routine({
     var byte, str, res;
@@ -83,7 +114,7 @@ r= Routine({
 r.stop;
 p.close;
 
-
+Quarks.gui;
 /// as an example, check Quarks:
 // Arduino -> ArduinoSMS protocol, but also good example for general protocol
 // DMX
