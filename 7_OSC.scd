@@ -16,7 +16,8 @@ NetAddr.langPort;
 
 // Or you can retrieve both the IP and the port with:
 
-NetAddr.localAddr;    // retrieve the current IP and port
+NetAddr.localAddr;    // retrieve the current IP and port (since 3.5)
+Main.version;
 
 
 // since SC 3.5 you can open up additional ports:
@@ -33,6 +34,9 @@ thisProcess.openPorts; // list all open custom ports
 
 // SuperCollider uses the same port to send from, as that is listens to.
 
+// sclang -> udp port out (57120) -> udp port (e.g. 6000) -> max-msp
+// max-msp -> udp port out (?? can't control this from max/msp) -> udp port in (57120) -> sclang
+
 // to send a message to yourself:
 
 // set the target address:
@@ -40,25 +44,31 @@ b = NetAddr( "127.0.0.1", NetAddr.langPort );
 // or:
 b = NetAddr( "127.0.0.1", 57120 );
 
-b.sendMsg( "/hello", "there" );
+b.sendMsg( "/hello", "there", 3, 6, 0, 2.0 );
 
-// listen to this:
+// osc message is defined as:
+// tag (/hello)
+// a number of parameters... strings, integers, floats
+
+// listen to this (3.5):
 o = OSCFunc({ arg ...args; args.postln; }, "/hello", NetAddr( "127.0.0.1", 57120 ) );
 
 b.sendMsg( "/hello", "there" );
 
 // the NetAddr in the OSCFunc is the NetAddr of the sender, so where the message comes from.
 // if the udp port of the sender is not constant, you can set the NetAddr of the sender to nil, and the OSCFunc will still fire:
-~onil = OSCFunc({ arg ...args; args.postln; }, "/hello", NetAddr( "127.0.0.1", nil ) );
+~onil = OSCFunc({ arg ...args; args.postln; }, "/hello", nil );
 
 // you can also set the port on which to listen (e.g. if the sender can only send to a specific port)
 ~oport = OSCFunc({ arg ...args; args.postln; }, "/hello", NetAddr( "127.0.0.1", nil ), 7771 );
 
 // the function that you define, gets the arguments:
 // msg - an array, starting with the osc-tag (/hello), and then the other values that are sent
-// a time - this is the time the message arrived, or the time tag
+// a time - this is the time the message arrived, or the time tag (compare with Process.elapsedTime)
 // a NetAddr - this is the address of the sender (where the message came from)
 // the recvport - the port that the message came into
+
+Process.elapsedTime
 
 // to track which messages come in, you can do:
 OSCFunc.trace( true );
@@ -120,3 +130,45 @@ NetAddr.langPort;
 OSCresponderNode.all.do{ |it| it.remove };
 
 b.sendMsg( "/hello", "there" );
+
+
+
+// example with Iannix:
+NetAddr.langPort;
+OSCFunc.trace( true );
+
+OSCFunc.trace( false );
+
+~cursors = IdentityDictionary.new;
+
+(
+OSCdef( \iannixcursor, {
+   arg msg, time, netaddr, port;
+   ~cursors.put( msg[1].asInteger, msg.copyToEnd(2) );
+   if ( msg[1].asInteger == 1 ){
+      x.set( \freq, ~cursors[1][0].linexp( 0, 1, 500, 1000 ) );
+      x.set( \amp, ~cursors[1][1].linlin( 0, 1, 0, 0.2 ) );
+   };
+   if ( msg[1].asInteger == 2 ){
+      y.set( \freq, ~cursors[2][0].linexp( 0, 1, 1000, 1500 ) );
+      y.set( \amp, ~cursors[2][1].linlin( 0, 1, 0, 0.2 ) );
+   }
+}, "/cursor", NetAddr( "127.0.0.1", 1234 ) );
+);
+
+~cursors[1]
+~cursors[2]
+
+s.boot;
+
+SynthDef( \cursorSound, { |out=0, freq=500, rq=0.1, amp=0.1| Out.ar( out, BPF.ar( WhiteNoise.ar( amp ), freq, rq ) ) } ).add;
+
+x = Synth.new( \cursorSound );
+y = Synth.new( \cursorSound, [\out,1] );
+
+
+x.set( \freq, ~cursors[1][0].linexp( 0, 1, 500, 1000 ) );
+x.set( \amp, ~cursors[1][1].linlin( 0, 1, 0, 1 ) );
+
+x.set( \amp, 0.5 );
+x.free;
