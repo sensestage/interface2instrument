@@ -33,16 +33,17 @@ GIxiHID{
 	}
 
 	*deviceList{
-		^IxiHID.deviceList;
+      var list = IxiHID.deviceList.asArray;
+		^list;
 	}
 
-	*postDevices { 
+	*postDevices {
 		IxiHID.deviceList.do({arg dev;
 			[ dev.id, dev.name ].postcs;
 		});
 	}
 
-	*postDevicesAndProperties { 
+	*postDevicesAndProperties {
 		IxiHID.deviceList.do({arg dev;
 			"".postln;
 			[ dev.id, dev.name ].postln;
@@ -57,7 +58,7 @@ GIxiHID{
 					});
 				};
 			};
-		});	
+		});
 	}
 
 	*startEventLoop{ |rate|
@@ -82,9 +83,9 @@ GIxiHID{
 
 	init{ |dev|
 		//	dev[0].postcs;
-		if ( dev[0].isKindOf( IxiHIDDevice ),
+		if ( dev.isKindOf( IxiHIDDevice ),
 			{
-				device = dev[0];
+				device = dev;
 				^GeneralHIDDevice.new( this );
 			},{
 				"not a valid device or could not open device".warn;
@@ -92,11 +93,17 @@ GIxiHID{
 			});
 	}
 
+   getInfo{
+      var info;
+      info = GeneralHIDInfo.new( device.name );
+      ^info;
+   }
+
 	getSlots{
 		var mySlots = IdentityDictionary.new;
 		var devSlots = device.slots;
 		devSlots.keysValuesDo{ |key,value,i|
-			(""++i+"key"+key+"value"+value).postcs;
+			//(""++i+"key"+key+"value"+value).postcs;
 			if ( devSlots.size > 0 ,{
 				mySlots[key] = IdentityDictionary.new;
 				value.keysValuesDo{ |key2,value2,i2|
@@ -104,7 +111,7 @@ GIxiHID{
 				};
 			});
 		};
-		mySlots.postcs;
+		//mySlots.postcs;
 		^mySlots;
 	}
 

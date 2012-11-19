@@ -1,5 +1,5 @@
 IxiHID{
-	classvar <path, responder;
+	classvar <>path, responder;
 	classvar <deviceList;
 	classvar <eventLoopIsRunning=false;
 	classvar <debug = false;
@@ -7,9 +7,10 @@ IxiHID{
 
 	*initClass{
 		path = "/home/nescivi/Downloads/HIDserver/";
+      //programLine = ("python"+path++"hidserver.py \"127.0.0.1\""
 		deviceList = ();
 	}
-	
+
 	*debug_{ |onoff|
 		debug = onoff;
 	}
@@ -28,22 +29,23 @@ IxiHID{
 			if ( msg[2] == 'hats', { IxiHID.deviceList[msg[1]].hats( msg[3] ) });
 			if ( msg[2] == 'balls', { IxiHID.deviceList[msg[1]].balls( msg[3] ) });
 
-			if ( msg[1] == 'button', { 
+			if ( msg[1] == 'button', {
 				IxiHID.deviceList[msg[2]].slots[1][msg[3]].value_( msg[4] );
 			} );
-			if ( msg[1] == 'axismotion', { 
+			if ( msg[1] == 'axismotion', {
 				IxiHID.deviceList[msg[2]].slots[3][msg[3]].value_( msg[4] );
 			});
-			if ( msg[1] == 'hatmotion', { 
+			if ( msg[1] == 'hatmotion', {
 				IxiHID.deviceList[msg[2]].slots[3][msg[3]+20].value_( msg[4] );
 			});
-			if ( msg[1] == 'ballmotion', { 
+			if ( msg[1] == 'ballmotion', {
 				IxiHID.deviceList[msg[2]].slots[2][msg[3]].value_( msg[4] );
 			});
 
 
 		}).add;
-		
+
+      // TODO: distinguish between using an app, or python call, or start hidserver manually
 		("python"+path++"hidserver.py \"127.0.0.1\""+NetAddr.langPort+rate).unixCmd;
 		eventLoopIsRunning = true;
 	}
@@ -90,34 +92,34 @@ IxiHIDDevice{
 
 	axes{ |no|
 		var newSlot;
-		no.do{ |it| 
+		no.do{ |it|
 			newSlot = IxiHIDSlot.new( this, 0x0003, it, it );
 			slots[0x0003].put( it, newSlot );
-		};	
+		};
 	}
 
 	buttons{ |no|
 		var newSlot;
-		no.do{ |it| 
+		no.do{ |it|
 			newSlot = IxiHIDSlot.new( this, 0x0001, it, it );
 			slots[0x0001].put( it, newSlot );
-		};	
+		};
 	}
 
 	balls{ |no|
 		var newSlot;
-		no.do{ |it| 
+		no.do{ |it|
 			newSlot = IxiHIDSlot.new( this, 0x0002, it, it );
 			slots[0x0003].put( it, newSlot );
-		};	
+		};
 		}
 
 	hats{ |no|
 		var newSlot;
-		no.do{ |it| 
+		no.do{ |it|
 			newSlot = IxiHIDSlot.new( this, 0x0003, it+20, it+20 );
 			slots[0x0003].put( it+20, newSlot );
-		};	
+		};
 	}
 }
 
@@ -126,7 +128,7 @@ IxiHIDSlot {
 	var <device, <type, <code, <cookie, value=0,  <>action;
 	var <spec;
 	classvar slotTypeMap;
-	
+
 	*initClass {
 		slotTypeMap = IdentityDictionary.new.addAll([
 			0x0001 -> IxiHIDKeySlot,
@@ -161,7 +163,7 @@ IxiHIDSlot {
 IxiHIDKeySlot : IxiHIDSlot {
 	initSpec {
 		super.initSpec;
-		//FIXME: 
+		//FIXME:
 		//value = device.valueByCookie(cookie);
 	}
 }
